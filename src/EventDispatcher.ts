@@ -68,7 +68,7 @@ module rce {
             for (let i = arrListener.length - 1; i >= 0; i -= 1) {
                 const temp = arrListener[i];
                 if (temp.handle === handle && temp.context === thisObject) {
-                    arrListener.splice(i, 0);
+                    arrListener.splice(i, 1);
                     return;
                 }
             }
