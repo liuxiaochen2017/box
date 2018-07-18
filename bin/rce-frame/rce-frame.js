@@ -199,6 +199,7 @@ var rce;
      * @param definition 类定义，必须是一个函数，且接收一个super作为参数
      * @param basicClass 要拓展的基类
      * @param tag 类名称，类定义会最终挂载到全局变量上
+     * @returns 返回一个Class定义，通过new关键字调用
      * @example
      * var SubClass = rce.extend(function(_super, param){
      *   _super();
