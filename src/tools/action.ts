@@ -23,7 +23,7 @@ module rce {
      * @param type 
      * @param data 
      */
-    export function doAction(type: string, data?: any):void {
+    export function doAction(type: string, data?: any): void {
         emittor.dispatchEvent(type, data);
-    } 
+    }
 }
