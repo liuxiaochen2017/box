@@ -1,0 +1,7 @@
+{
+	"name": "rce-frame",
+	"compilerVersion": "5.2.5",
+	"scripts": {
+		"build": "egret b"
+	}
+}
