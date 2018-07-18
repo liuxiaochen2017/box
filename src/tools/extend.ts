@@ -23,8 +23,8 @@ module rce {
                 return _this;
             } : null;
             function TempClass() {
-                let params = [__super ? __super.bind(this) : null].concat(arguments);
-                definition.call(this, params);
+                Array.prototype.unshift.call(arguments, __super ? __super.bind(this) : null)
+                definition.apply(this, arguments);
                 return this;
             }
             return TempClass;
