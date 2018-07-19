@@ -1,14 +1,13 @@
 module rce {
-    const _definition = {};
     /**
      * 类型拓展方法
-     * @param definition 类定义，必须是一个函数，且接收一个super作为参数
-     * @param basicClass 要拓展的基类
-     * @param TAG 类名称，类定义会最终挂载到全局变量上
+     * @param definition 类定义，必须是一个函数
+     * @param _super 要拓展的基类
+     * @param TAG 类名称，通过__types__来追溯继承路径
      * @returns 返回一个Class定义，通过new关键字调用
      * @example
-     * var SubClass = rce.extend(function(_super, param){
-     *   _super();
+     * var SubClass = rce.extend(function SubClass(param){
+     *   rce.HashObject.call(this)
      *   this.param = param;
      * }, rce.HashObject, 'SubClass');
      * var sub = new SubClass('test');
