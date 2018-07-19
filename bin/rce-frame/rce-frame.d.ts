@@ -41,6 +41,11 @@ declare module rce {
          */
         removeEventListener(eventType: string, handle: Handler, thisObject?: any): void;
         /**
+         * 移除所有相关事件类型的监听器
+         * @param eventType
+         */
+        removeAllListener(eventType: string): void;
+        /**
          * 派发事件
          * @param eventType
          * @param data
