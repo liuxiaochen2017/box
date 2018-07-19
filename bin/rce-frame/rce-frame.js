@@ -194,11 +194,12 @@ var rce;
 })(rce || (rce = {}));
 var rce;
 (function (rce) {
+    var _definition = {};
     /**
      * 类型拓展方法
      * @param definition 类定义，必须是一个函数，且接收一个super作为参数
      * @param basicClass 要拓展的基类
-     * @param tag 类名称，类定义会最终挂载到全局变量上
+     * @param TAG 类名称，类定义会最终挂载到全局变量上
      * @returns 返回一个Class定义，通过new关键字调用
      * @example
      * var SubClass = rce.extend(function(_super, param){
@@ -209,24 +210,12 @@ var rce;
      * console.log(sub.hashCode); // 打印继承的基类属性
      * console.log(sub.param); // 打印自身定义的实例属性
      */
-    function extend(definition, basicClass, tag) {
+    function extend(definition, _super, TAG) {
         var __extends = window['__extends'];
         var __reflect = window['__reflect'];
-        var TempClass = (function (_super) {
-            _super && __extends(TempClass, _super);
-            var __super = _super ? function () {
-                var _this = _super !== null && _super.apply(this, arguments) || this;
-                return _this;
-            } : null;
-            function TempClass() {
-                Array.prototype.unshift.call(arguments, __super ? __super.bind(this) : null);
-                definition.apply(this, arguments);
-                return this;
-            }
-            return TempClass;
-        })(basicClass);
-        __reflect(TempClass, tag);
-        return TempClass;
+        __extends(definition, _super);
+        __reflect(definition.prototype, TAG);
+        return definition;
     }
     rce.extend = extend;
 })(rce || (rce = {}));
