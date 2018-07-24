@@ -24,19 +24,28 @@ View2 -> App: 注册需要监听的广播(type, listener)
 ... ================ 通知处理 ================ ...
 
 View1 -> App: 发送通知(type, data, callback)
+activate App
 App --> App: 查找Service
 App --> Middleware: 发送通知数据(data, callback)
+activate Middleware
 Middleware --> Middleware: dosomething
 Middleware --> Service2: 
+activate Service2
 Service2 --> Middleware: callback(result)
+deactivate Service2
 Middleware --> Middleware: dosomething
-Middleware -> View1: callback(result)
+Middleware --> App:
+deactivate Middleware
+App -> View1: callback(result)
+deactivate App
 
 ... ================ 广播处理 ================ ...
 
 Service2 --> App: 发送广播
+activate App
 App -> Service1: 分发广播
 App -> View1: 分发广播
 App -> View2: 分发广播
+deactivate App
 
 @enduml
