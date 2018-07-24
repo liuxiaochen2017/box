@@ -1,0 +1,42 @@
+@startuml
+
+box "Service" #LightBlue
+	participant Service1
+	participant Service2
+end box
+
+participant Middleware
+participant App
+
+box "View" #LightBlue
+	participant View1
+	participant View2
+end box
+
+== beforeStart ==
+
+Service1 -> App: 注册可处理的notice类型(type, listener)
+Service1 -> App: 注册需要监听的广播(type, listener)
+View2 -> App: 注册需要监听的广播(type, listener)
+
+== app.start() ==
+
+... ================ 通知处理 ================ ...
+
+View1 -> App: 发送通知(type, data, callback)
+App --> App: 查找Service
+App --> Middleware: 发送通知数据(data, callback)
+Middleware --> Middleware: dosomething
+Middleware --> Service2: 
+Service2 --> Middleware: callback(result)
+Middleware --> Middleware: dosomething
+Middleware -> View1: callback(result)
+
+... ================ 广播处理 ================ ...
+
+Service2 --> App: 发送广播
+App -> Service1: 分发广播
+App -> View1: 分发广播
+App -> View2: 分发广播
+
+@enduml

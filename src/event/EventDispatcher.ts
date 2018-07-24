@@ -90,9 +90,16 @@ module rce {
          * @param eventType 
          * @param data 
          */
-        dispatchEvent(eventType: string, data?: any) {
-            const event = new Event(eventType, this, data);
-            const arrListener: Listener[] = this.mapListeners[eventType];
+        dispatchWith(eventType: string, data?: any) {
+            this.dispatchEvent(new Event(eventType, data))
+        }
+        /**
+         * 派发事件
+         * @param eventType 
+         * @param data 
+         */
+        dispatchEvent(event: Event) {
+            const arrListener: Listener[] = this.mapListeners[event.type];
             if (arrListener) {
                 arrListener.forEach(listener => listener.handle.call(listener.context, event))
             }

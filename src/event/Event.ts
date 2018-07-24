@@ -4,23 +4,18 @@ module rce {
      */
     export class Event extends HashObject {
         /**
-         * 事件派发器对象
+         * 类型
          */
-        readonly target: EventDispatcher;
+        readonly type: string;
         /**
-         * 事件类型
-         */
-        readonly eventType: string;
-        /**
-         * 事件携带的数据
+         * 携带的数据
          */
         readonly data: any;
 
-        constructor(eventType: string, target: EventDispatcher, data?: any) {
+        constructor(type: string, data?: any) {
             super()
 
-            this.eventType = eventType;
-            this.target = target;
+            this.type = type;
             this.data = data;
         }
     }

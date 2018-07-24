@@ -4,7 +4,10 @@
 		"noImplicitAny": false,
 		"sourceMap": false,
 		"declaration": true,
-		"outFile": "bin/rce-frame/rce-frame.js"
+		"outFile": "bin/rce-frame/rce-frame.js",
+		"lib": [
+			"dom", "es2015.promise", "es5"
+		]
 	},
 	"include": [
 		"src"

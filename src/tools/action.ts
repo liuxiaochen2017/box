@@ -24,6 +24,6 @@ module rce {
      * @param data 
      */
     export function doAction(type: string, data?: any): void {
-        emittor.dispatchEvent(type, data);
+        emittor.dispatchWith(type, data);
     }
 }
