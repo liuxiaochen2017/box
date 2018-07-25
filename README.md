@@ -20,7 +20,7 @@ Broadcast 是对非定向消息的抽象，Broadcast 只能由 Service 派发。
 
 ### Service（服务）
 
-Service 是所有业务的处理单元，将不同的模块功能封装为不同的 Service 实例，可使得每个模块的功能内聚；与此同时，所有 Service 之间通过 Notice 进行消息定向消息传递，从而使不同的Service之间的功能解耦
+Service 是所有业务的处理单元，将不同的模块功能封装为不同的 Service 实例，可使得每个模块的功能内聚；与此同时，所有 Service 之间通过 Notice 进行消息传递，从而使不同的Service之间的功能解耦
 
 ### App 
 
@@ -41,8 +41,16 @@ App 在将 Notice 传递给 Service 之前会先传递给中间件，并在获�
 ### 示例图
 ![处理](./doc/uml/Notice_Timeline.png)
 
-### ViewPlugin
+--
+
+# ViewPlugin
 
 视图层拓展，根据视图层框架不同定义不同的Plugin，以使 View 层组件具备接收 Broadcost 和发送 Notice 的功能
 
 视图层根据自身所用的框架，选择不同的Plugin进行集成
+
+--
+
+# 类图示例
+
+![](./doc/uml/ClassDefination.png)

@@ -1,0 +1,73 @@
+@startuml ClassDefination
+
+class HashObject {
+    + hashCode: number
+}
+
+class Event {
+    + eventType: string
+    + data: any
+    + constructor(eventType, data)
+}
+
+class EventDispatcher {
+    + addEventListener(eventType, listener, thisObject, priority)
+    + removeEventListener(eventType, listener, thisObject)
+    + dispatchEvent(event)
+    + dispatchWith(eventType, data)
+}
+
+class Service {
+    # final registerNoticeListener(noticeType, listener, thisObject)
+    # final registerBroadcastListener(broadcastType, listener, thisObject)
+    # final sendNotice(noticeType, data?, whileDone, thisObject)
+    # final sendBroadcast(broadcastType, data?)
+}
+
+class App {
+    + addService(...services: Services[])
+    + addMiddleware(...middleware: Middleware[])
+}
+
+class ViewComponent {
+    # final registerBroadcastListener(broadcastType, listener, thisObject)
+    # final sendNotice(noticeType, data?, whildDone, thisObject)
+}
+
+class Notice {
+    + noticeType: string
+    + whileDone: Function
+    + context: any
+    + constructor(noticeType, data, whileDone, context)
+}
+
+class Broadcast {
+    + broadcastType: string
+    + constructor(broadcastType, data)
+}
+
+HashObject <|- Event
+Event <|- Notice
+Event <|-- Broadcast
+HashObject <|-- EventDispatcher
+EventDispatcher <|- Service
+EventDispatcher <|-- App
+Service <|--Service1
+Service <|--Service2
+Service <|--Service3
+Service <|--Service4
+Service1 --o App
+Service2 --o App
+Service3 --o App
+Service4 --o App
+App .o ViewPlugin
+ViewPlugin -* ViewComponent
+ViewComponent <|-- Component1
+ViewComponent <|-- Component2
+ViewComponent <|-- Component3
+ViewComponent <|-- Component4
+Middleware -o App 
+Middleware <|-- Middleware1
+Middleware <|-- Middleware2
+
+@enduml
