@@ -1,10 +1,11 @@
+///<reference path="./core/HashObject.ts" />
 module rce {
     /**
      * App 实例是整个前端业务的逻辑根节点。
      * view 层及 service 通过 App 实例发送通知来进行业务操作；
      * 通知分发由 App 实例对象内部完成，通知的处理由所注册的 service 实例完成；
      */
-    export class App {
+    export class App extends HashObject {
 
         private _serviceArr: Service[] = [];
 
@@ -42,24 +43,60 @@ module rce {
             return Promise.resolve();
         }
 
+        private _mapNoticeListener = {};
+
         // 添加通知监听器，同一类型通知只能存在一个监听器，不可重复，以此保证功能的唯一性
         __addNoticeListener(...arrNoticeListener: NoticeListener[]) {
-            
-        }
-
-        // 添加广播监听器
-        __addBroadcastListener(...arrBroadcastListener: BroadcastListener[]) {
-
+            for (let i = 0, len = arrNoticeListener.length; i < len; i += 1) {
+                const listener = arrNoticeListener[i];
+                const noticeType = listener.noticeType;
+                if (this._mapNoticeListener[noticeType]) {
+                    throw new Error(`每个特定的Notice类型消息只能存在唯一一个监听器: ${noticeType}`);
+                }
+                this._mapNoticeListener[noticeType] = listener;
+            }
         }
 
         // 接收通知事件
         private receiveNotice(notice: Notice) {
-            // TODO 接收到 通知，发送给相应的 通知监听器
+            const noticeType = notice.noticeType;
+            // 查找通知监听器
+            const listener: NoticeListener = this._mapNoticeListener[noticeType];
+            if (!listener) {
+                console.warn(`未处理的通知事件: ${noticeType}`);
+                return;
+            }
+            listener.handle.call(listener.context, notice);
+        }
+
+        private _mapBroadcastListener = {};
+
+        // 添加广播监听器
+        __addBroadcastListener(...arrBroadcastListener: BroadcastListener[]) {
+            for (let i = 0, len = arrBroadcastListener.length; i < len; i += 1) {
+                const listener = arrBroadcastListener[i];
+                // 监听的广播类型
+                const type = listener.broadcastType;
+                const arrListener: BroadcastListener[] = this._mapBroadcastListener[type]
+                if (!arrListener) {
+                    this._mapBroadcastListener[type] = [listener];
+                } else {
+                    arrListener.push(listener);
+                }
+            }
         }
 
         // 接收广播事件
         private receiveBroadcast(broadcast: Broadcast) {
-            // TODO 接收到 广播，分发给所有的 广播接收器
+            const type = broadcast.broadcastType
+            // 按广播类型查找监听器
+            const arrListener: BroadcastListener[] = this._mapBroadcastListener[type]
+            if (!arrListener) {
+                console.warn(`未处理的广播事件: ${type}`);
+                return;
+            }
+            // 逐一发送广播数据
+            arrListener.forEach(lisener => lisener.handle.call(lisener.context, broadcast))
         }
 
         private _viewPlugin: Plugin;

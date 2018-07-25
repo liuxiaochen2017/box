@@ -224,6 +224,17 @@ var rce;
 })(rce || (rce = {}));
 var rce;
 (function (rce) {
+    var _version = '0.1.0';
+    /**
+     * 获取 rce 框架版本
+     */
+    function version() {
+        return "rce_frame_v_" + version;
+    }
+    rce.version = version;
+})(rce || (rce = {}));
+var rce;
+(function (rce) {
     /**
      * 通知事件：用于view层与service及service之间的消息传递。
      */
@@ -304,6 +315,7 @@ var rce;
     rce.VuePlugin = VuePlugin;
     __reflect(VuePlugin.prototype, "rce.VuePlugin");
 })(rce || (rce = {}));
+///<reference path="./core/HashObject.ts" />
 var rce;
 (function (rce) {
     /**
@@ -311,9 +323,14 @@ var rce;
      * view 层及 service 通过 App 实例发送通知来进行业务操作；
      * 通知分发由 App 实例对象内部完成，通知的处理由所注册的 service 实例完成；
      */
-    var App = (function () {
+    var App = (function (_super) {
+        __extends(App, _super);
         function App() {
-            this._serviceArr = [];
+            var _this = _super !== null && _super.apply(this, arguments) || this;
+            _this._serviceArr = [];
+            _this._mapNoticeListener = {};
+            _this._mapBroadcastListener = {};
+            return _this;
         }
         /**
          * 注册服务
@@ -342,7 +359,7 @@ var rce;
             for (var i = 0, len = this._serviceArr.length; i < len; i += 1) {
                 this._serviceArr.forEach(function (service) {
                     // 挂载 Notice 与 Broadcast 监听器
-                    service.__install(_this);
+                    service.__beforeAppStart(_this);
                     // 监听 service 派发的 Notice 
                     service.addEventListener(rce.Notice.EVENT, _this.receiveNotice, _this);
                     // 监听 service 派发的 Broadcast
@@ -352,23 +369,62 @@ var rce;
             // 暂时定义未异步函数，以方便后续可能的拓展
             return Promise.resolve();
         };
+        // 添加通知监听器，同一类型通知只能存在一个监听器，不可重复，以此保证功能的唯一性
         App.prototype.__addNoticeListener = function () {
             var arrNoticeListener = [];
             for (var _i = 0; _i < arguments.length; _i++) {
                 arrNoticeListener[_i] = arguments[_i];
             }
+            for (var i = 0, len = arrNoticeListener.length; i < len; i += 1) {
+                var listener = arrNoticeListener[i];
+                var noticeType = listener.noticeType;
+                if (this._mapNoticeListener[noticeType]) {
+                    throw new Error("\u6BCF\u4E2A\u7279\u5B9A\u7684Notice\u7C7B\u578B\u6D88\u606F\u53EA\u80FD\u5B58\u5728\u552F\u4E00\u4E00\u4E2A\u76D1\u542C\u5668: " + noticeType);
+                }
+                this._mapNoticeListener[noticeType] = listener;
+            }
         };
+        // 接收通知事件
+        App.prototype.receiveNotice = function (notice) {
+            var noticeType = notice.noticeType;
+            // 查找通知监听器
+            var listener = this._mapNoticeListener[noticeType];
+            if (!listener) {
+                console.warn("\u672A\u5904\u7406\u7684\u901A\u77E5\u4E8B\u4EF6: " + noticeType);
+                return;
+            }
+            listener.handle.call(listener.context, notice);
+        };
+        // 添加广播监听器
         App.prototype.__addBroadcastListener = function () {
             var arrBroadcastListener = [];
             for (var _i = 0; _i < arguments.length; _i++) {
                 arrBroadcastListener[_i] = arguments[_i];
             }
+            for (var i = 0, len = arrBroadcastListener.length; i < len; i += 1) {
+                var listener = arrBroadcastListener[i];
+                // 监听的广播类型
+                var type = listener.broadcastType;
+                var arrListener = this._mapBroadcastListener[type];
+                if (!arrListener) {
+                    this._mapBroadcastListener[type] = [listener];
+                }
+                else {
+                    arrListener.push(listener);
+                }
+            }
         };
-        App.prototype.receiveNotice = function (notice) {
-            // 接收到 通知，发送给相应的 通知监听器
-        };
+        // 接收广播事件
         App.prototype.receiveBroadcast = function (broadcast) {
-            // 接收到 广播，分发给所有的 广播接收器
+            var type = broadcast.broadcastType;
+            // 按广播类型查找监听器
+            var arrListener = this._mapBroadcastListener[type];
+            if (!arrListener) {
+                console.warn("\u672A\u5904\u7406\u7684\u5E7F\u64AD\u4E8B\u4EF6: " + type);
+                return;
+            }
+            // 逐一发送广播数据
+            arrListener.forEach(function (lisener) { return lisener.handle.call(lisener.context, broadcast); });
         };
         /**
          * 获取视图组件插件
@@ -377,8 +433,12 @@ var rce;
          * Vue框架使用方法
          * `Vue.use(app.viewPlugin('Vue'))`
          * 给组件增加发送通知及接收广播的能力
-         * `this.$sendNotice('') // 发送通知`
-         * `this.$listenBroadcast('') // 监听广播`
+         * * 发送通知
+         * `this.$sendNotice('')`
+         * 别名方法 `this.__s('')`
+         * * 监听广播
+         * `this.$listenBroadcast('')`
+         * 别名方法：`this.__l`
          */
         App.prototype.viewPlugin = function (type) {
             var _this = this;
@@ -394,7 +454,7 @@ var rce;
             return this._viewPlugin;
         };
         return App;
-    }());
+    }(rce.HashObject));
     rce.App = App;
     __reflect(App.prototype, "rce.App");
 })(rce || (rce = {}));
@@ -402,10 +462,10 @@ var rce;
 (function (rce) {
     /**
      * service 基类，封装非UI层业务逻辑，所有的service需继承此基类！
-     * 通过`this.registerNoticeListener()`注册要处理的`Notice`类型及相应处理方法！
-     * @example this.registerNoticeListener('')
-     * 通过`this.listenBroadcast()`监听相应的`Broadcast`类型
-     *
+     * 通过`this.listenNotice()`监听指定类型的 Notice，别名`this.__ln()`
+     * 通过`this.sendNotice()`发送通知，别名`this.__sn()`
+     * 通过`this.listenBroadcast()`监听指定类型的 Broadcast，别名`this.__lb()`
+     * 通过`this.sendBroadcast()`发送广播，别名`this.__sb()`
      */
     var Service = (function (_super) {
         __extends(Service, _super);
@@ -413,14 +473,14 @@ var rce;
             var _this = _super !== null && _super.apply(this, arguments) || this;
             _this.__noticeListeneres = [];
             /**
-             * 注册通知处理函数，用来处理 Notice 实例
+             * 监听通知
              */
-            _this.registerNoticeListener = function (noticeType, handle, thisObject) {
+            _this.listenNotice = function (noticeType, handle, thisObject) {
                 _this.__noticeListeneres.push({ noticeType: noticeType, handle: handle, context: thisObject });
             };
             _this.__broadcastListeneres = [];
             /**
-             * 注册广播处理函数，用于接收广播数据
+             * 监听广播
              */
             _this.listenBroadcast = function (broadcastType, handle, thisObject) {
                 _this.__broadcastListeneres.push({ broadcastType: broadcastType, handle: handle, context: thisObject });
@@ -443,20 +503,31 @@ var rce;
             _this.sendBroadcast = function (broadcastType, data) {
                 _this.dispatchEvent(new rce.Broadcast(broadcastType, data));
             };
-            _this.__install = function (app) {
+            /**
+             * App启动时会调用的钩子函数，勿手动调用
+             */
+            _this.__beforeAppStart = function (app) {
                 // 添加 Notice 监听
                 app.__addNoticeListener.apply(app, _this.__noticeListeneres);
                 // 添加 Broadcast 监听
                 app.__addBroadcastListener.apply(app, _this.__broadcastListeneres);
             };
             /**
+             * listenNotice 的别名方法
+             */
+            _this.__ln = _this.listenNotice;
+            /**
              * sendNotice 的别名方法
              */
-            _this.__s = _this.sendNotice;
+            _this.__sn = _this.sendNotice;
+            /**
+             * sendBroadcast 的别名方法
+             */
+            _this.__sb = _this.sendBroadcast;
             /**
              * listenBroadcast 的别名方法
              */
-            _this.__l = _this.listenBroadcast;
+            _this.__lb = _this.listenBroadcast;
             return _this;
         }
         return Service;
@@ -551,15 +622,4 @@ var rce;
     function noop() {
     }
     rce.noop = noop;
-})(rce || (rce = {}));
-var rce;
-(function (rce) {
-    var _version = '0.1.0';
-    /**
-     * 获取 rce 框架版本
-     */
-    function version() {
-        return "rce_frame_v_" + version;
-    }
-    rce.version = version;
 })(rce || (rce = {}));

@@ -134,6 +134,12 @@ declare module rce {
 }
 declare module rce {
     /**
+     * 获取 rce 框架版本
+     */
+    function version(): string;
+}
+declare module rce {
+    /**
      * 通知事件：用于view层与service及service之间的消息传递。
      */
     class Notice extends Event {
@@ -240,7 +246,7 @@ declare module rce {
      * view 层及 service 通过 App 实例发送通知来进行业务操作；
      * 通知分发由 App 实例对象内部完成，通知的处理由所注册的 service 实例完成；
      */
-    class App {
+    class App extends HashObject {
         private _serviceArr;
         /**
          * 注册服务
@@ -256,9 +262,11 @@ declare module rce {
          * 启动app
          */
         start(): Promise<void>;
+        private _mapNoticeListener;
         __addNoticeListener(...arrNoticeListener: NoticeListener[]): void;
-        __addBroadcastListener(...arrBroadcastListener: BroadcastListener[]): void;
         private receiveNotice(notice);
+        private _mapBroadcastListener;
+        __addBroadcastListener(...arrBroadcastListener: BroadcastListener[]): void;
         private receiveBroadcast(broadcast);
         private _viewPlugin;
         /**
@@ -268,8 +276,12 @@ declare module rce {
          * Vue框架使用方法
          * `Vue.use(app.viewPlugin('Vue'))`
          * 给组件增加发送通知及接收广播的能力
-         * `this.$sendNotice('') // 发送通知`
-         * `this.$listenBroadcast('') // 监听广播`
+         * * 发送通知
+         * `this.$sendNotice('')`
+         * 别名方法 `this.__s('')`
+         * * 监听广播
+         * `this.$listenBroadcast('')`
+         * 别名方法：`this.__l`
          */
         viewPlugin(type: PluginType): Plugin;
     }
@@ -277,20 +289,20 @@ declare module rce {
 declare module rce {
     /**
      * service 基类，封装非UI层业务逻辑，所有的service需继承此基类！
-     * 通过`this.registerNoticeListener()`注册要处理的`Notice`类型及相应处理方法！
-     * @example this.registerNoticeListener('')
-     * 通过`this.listenBroadcast()`监听相应的`Broadcast`类型
-     *
+     * 通过`this.listenNotice()`监听指定类型的 Notice，别名`this.__ln()`
+     * 通过`this.sendNotice()`发送通知，别名`this.__sn()`
+     * 通过`this.listenBroadcast()`监听指定类型的 Broadcast，别名`this.__lb()`
+     * 通过`this.sendBroadcast()`发送广播，别名`this.__sb()`
      */
     abstract class Service extends EventDispatcher {
         private __noticeListeneres;
         /**
-         * 注册通知处理函数，用来处理 Notice 实例
+         * 监听通知
          */
-        protected readonly registerNoticeListener: (noticeType: string, handle: NoticeHandle, thisObject?: any) => void;
+        protected readonly listenNotice: (noticeType: string, handle: NoticeHandle, thisObject?: any) => void;
         private __broadcastListeneres;
         /**
-         * 注册广播处理函数，用于接收广播数据
+         * 监听广播
          */
         protected readonly listenBroadcast: (broadcastType: string, handle: BroadcastHandle, thisObject?: any) => void;
         /**
@@ -307,15 +319,26 @@ declare module rce {
          * @param data 携带的数据
          */
         protected readonly sendBroadcast: (broadcastType: string, data?: any) => void;
-        readonly __install: (app: App) => void;
+        /**
+         * App启动时会调用的钩子函数，勿手动调用
+         */
+        readonly __beforeAppStart: (app: App) => void;
+        /**
+         * listenNotice 的别名方法
+         */
+        protected readonly __ln: (noticeType: string, handle: NoticeHandle, thisObject?: any) => void;
         /**
          * sendNotice 的别名方法
          */
-        protected readonly __s: (noticeType: string, data?: any, whileDone?: Function, context?: any) => void;
+        protected readonly __sn: (noticeType: string, data?: any, whileDone?: Function, context?: any) => void;
+        /**
+         * sendBroadcast 的别名方法
+         */
+        protected readonly __sb: (broadcastType: string, data?: any) => void;
         /**
          * listenBroadcast 的别名方法
          */
-        protected readonly __l: (broadcastType: string, handle: BroadcastHandle, thisObject?: any) => void;
+        protected readonly __lb: (broadcastType: string, handle: BroadcastHandle, thisObject?: any) => void;
     }
 }
 declare module rce {
@@ -372,10 +395,4 @@ declare module rce {
      * 空函数
      */
     function noop(): void;
-}
-declare module rce {
-    /**
-     * 获取 rce 框架版本
-     */
-    function version(): string;
 }
