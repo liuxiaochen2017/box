@@ -18,19 +18,19 @@ class EventDispatcher {
 }
 
 class Service {
-    # final registerNoticeListener(noticeType, listener, thisObject)
-    # final registerBroadcastListener(broadcastType, listener, thisObject)
+    # final listenNotice(noticeType, listener, thisObject)
+    # final listenBroadcast(broadcastType, listener, thisObject)
     # final sendNotice(noticeType, data?, whileDone, thisObject)
     # final sendBroadcast(broadcastType, data?)
 }
 
 class App {
-    + addService(...services: Services[])
-    + addMiddleware(...middleware: Middleware[])
+    + useService(...services: Services[])
+    + useMiddleware(...middleware: Middleware[])
 }
 
-class ViewComponent {
-    # final registerBroadcastListener(broadcastType, listener, thisObject)
+class ViewPlugin {
+    # final listenBroadcast(broadcastType, listener, thisObject)
     # final sendNotice(noticeType, data?, whildDone, thisObject)
 }
 
@@ -60,7 +60,7 @@ Service1 --o App
 Service2 --o App
 Service3 --o App
 Service4 --o App
-App .o ViewPlugin
+App o. ViewPlugin
 ViewPlugin -* ViewComponent
 ViewComponent <|-- Component1
 ViewComponent <|-- Component2
