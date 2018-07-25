@@ -222,47 +222,6 @@ var rce;
     }
     rce.getPlugin = getPlugin;
 })(rce || (rce = {}));
-var rce;
-(function (rce) {
-    var _version = '0.1.0';
-    /**
-     * 获取 rce 框架版本
-     */
-    function version() {
-        return "rce_frame_v_" + version;
-    }
-    rce.version = version;
-})(rce || (rce = {}));
-var rce;
-(function (rce) {
-    /**
-     * 通知事件：用于view层与service及service之间的消息传递。
-     */
-    var Notice = (function (_super) {
-        __extends(Notice, _super);
-        /**
-         * 构建一条通知
-         * @param noticeType 通知类型
-         * @param data 通知数据
-         * @param whileDone 通知处理完成时的回调函数，可用于接收结果
-         * @param context 回调函数的 this 指向
-         */
-        function Notice(noticeType, data, whileDone, context) {
-            var _this = _super.call(this, Notice.EVENT, data) || this;
-            _this.noticeType = noticeType;
-            _this.whileDone = whileDone;
-            _this.context = context;
-            return _this;
-        }
-        /**
-         * 通知事件类型常量
-         */
-        Notice.EVENT = 'SYSTEM.EVENT.NOTICE';
-        return Notice;
-    }(rce.Event));
-    rce.Notice = Notice;
-    __reflect(Notice.prototype, "rce.Notice");
-})(rce || (rce = {}));
 ///<reference path="./Event.ts" />
 var rce;
 (function (rce) {
@@ -293,27 +252,32 @@ var rce;
 var rce;
 (function (rce) {
     /**
-     * Vue 框架插件
+     * 通知事件：用于view层与service及service之间的消息传递。
      */
-    var VuePlugin = (function (_super) {
-        __extends(VuePlugin, _super);
-        function VuePlugin() {
-            return _super !== null && _super.apply(this, arguments) || this;
+    var Notice = (function (_super) {
+        __extends(Notice, _super);
+        /**
+         * 构建一条通知
+         * @param noticeType 通知类型
+         * @param data 通知数据
+         * @param whileDone 通知处理完成时的回调函数，可用于接收结果
+         * @param context 回调函数的 this 指向
+         */
+        function Notice(noticeType, data, whileDone, context) {
+            var _this = _super.call(this, Notice.EVENT, data) || this;
+            _this.noticeType = noticeType;
+            _this.whileDone = whileDone;
+            _this.context = context;
+            return _this;
         }
-        VuePlugin.prototype.install = function (Vue) {
-            var _this = this;
-            Vue.mixin({
-                beforeCreate: function () {
-                    // __s 与 __l 是别名，用来方便业务开发
-                    this.__s = this.$sendNotice = _this.sendNotice.bind(_this);
-                    this.__l = this.$listenBroadcast = _this.registerBroadcastListener.bind(_this);
-                }
-            });
-        };
-        return VuePlugin;
-    }(rce.Plugin));
-    rce.VuePlugin = VuePlugin;
-    __reflect(VuePlugin.prototype, "rce.VuePlugin");
+        /**
+         * 通知事件类型常量
+         */
+        Notice.EVENT = 'SYSTEM.EVENT.NOTICE';
+        return Notice;
+    }(rce.Event));
+    rce.Notice = Notice;
+    __reflect(Notice.prototype, "rce.Notice");
 })(rce || (rce = {}));
 ///<reference path="./core/HashObject.ts" />
 var rce;
@@ -457,6 +421,31 @@ var rce;
     }(rce.HashObject));
     rce.App = App;
     __reflect(App.prototype, "rce.App");
+})(rce || (rce = {}));
+var rce;
+(function (rce) {
+    /**
+     * Vue 框架插件
+     */
+    var VuePlugin = (function (_super) {
+        __extends(VuePlugin, _super);
+        function VuePlugin() {
+            return _super !== null && _super.apply(this, arguments) || this;
+        }
+        VuePlugin.prototype.install = function (Vue) {
+            var _this = this;
+            Vue.mixin({
+                beforeCreate: function () {
+                    // __s 与 __l 是别名，用来方便业务开发
+                    this.__s = this.$sendNotice = _this.sendNotice.bind(_this);
+                    this.__l = this.$listenBroadcast = _this.registerBroadcastListener.bind(_this);
+                }
+            });
+        };
+        return VuePlugin;
+    }(rce.Plugin));
+    rce.VuePlugin = VuePlugin;
+    __reflect(VuePlugin.prototype, "rce.VuePlugin");
 })(rce || (rce = {}));
 var rce;
 (function (rce) {
@@ -622,4 +611,15 @@ var rce;
     function noop() {
     }
     rce.noop = noop;
+})(rce || (rce = {}));
+var rce;
+(function (rce) {
+    var _version = '0.1.0';
+    /**
+     * 获取 rce 框架版本
+     */
+    function version() {
+        return "rce_frame_v_" + version;
+    }
+    rce.version = version;
 })(rce || (rce = {}));

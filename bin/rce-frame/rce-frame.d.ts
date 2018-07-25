@@ -134,9 +134,45 @@ declare module rce {
 }
 declare module rce {
     /**
-     * 获取 rce 框架版本
+     * 广播事件
      */
-    function version(): string;
+    class Broadcast extends Event {
+        /**
+         * 广播事件类型常量
+         */
+        static readonly EVENT: string;
+        /**
+         * 广播类型
+         */
+        readonly broadcastType: string;
+        /**
+         * 构建一条广播
+         * @param broadcastType 广播类型
+         * @param data 广播数据
+         */
+        constructor(broadcastType: string, data?: any);
+    }
+    /**
+     * 广播事件处理器
+     */
+    type BroadcastHandle = (broadcast: Broadcast) => void;
+    /**
+     * 广播事件监听器
+     */
+    type BroadcastListener = {
+        /**
+         * 监听的广播类型
+         */
+        broadcastType: string;
+        /**
+         * 广播处理器
+         */
+        handle: BroadcastHandle;
+        /**
+         * 处理器函数的 this 作用域指向
+         */
+        context: any;
+    };
 }
 declare module rce {
     /**
@@ -192,56 +228,6 @@ declare module rce {
 }
 declare module rce {
     /**
-     * 广播事件
-     */
-    class Broadcast extends Event {
-        /**
-         * 广播事件类型常量
-         */
-        static readonly EVENT: string;
-        /**
-         * 广播类型
-         */
-        readonly broadcastType: string;
-        /**
-         * 构建一条广播
-         * @param broadcastType 广播类型
-         * @param data 广播数据
-         */
-        constructor(broadcastType: string, data?: any);
-    }
-    /**
-     * 广播事件处理器
-     */
-    type BroadcastHandle = (broadcast: Broadcast) => void;
-    /**
-     * 广播事件监听器
-     */
-    type BroadcastListener = {
-        /**
-         * 监听的广播类型
-         */
-        broadcastType: string;
-        /**
-         * 广播处理器
-         */
-        handle: BroadcastHandle;
-        /**
-         * 处理器函数的 this 作用域指向
-         */
-        context: any;
-    };
-}
-declare module rce {
-    /**
-     * Vue 框架插件
-     */
-    class VuePlugin extends Plugin {
-        install(Vue: any): void;
-    }
-}
-declare module rce {
-    /**
      * App 实例是整个前端业务的逻辑根节点。
      * view 层及 service 通过 App 实例发送通知来进行业务操作；
      * 通知分发由 App 实例对象内部完成，通知的处理由所注册的 service 实例完成；
@@ -284,6 +270,14 @@ declare module rce {
          * 别名方法：`this.__l`
          */
         viewPlugin(type: PluginType): Plugin;
+    }
+}
+declare module rce {
+    /**
+     * Vue 框架插件
+     */
+    class VuePlugin extends Plugin {
+        install(Vue: any): void;
     }
 }
 declare module rce {
@@ -389,10 +383,14 @@ declare module rce {
     function extend(definition: any, basicClass: any, TAG: any, editProto: any): () => any;
 }
 declare module rce {
-}
-declare module rce {
     /**
      * 空函数
      */
     function noop(): void;
+}
+declare module rce {
+    /**
+     * 获取 rce 框架版本
+     */
+    function version(): string;
 }
