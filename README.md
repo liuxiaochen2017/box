@@ -1,7 +1,13 @@
 # WEB前端框架设计
 
 --
-# 基础概念
+
+![](./doc/uml/ClassDefination.png)
+
+--
+
+# 基础概念解释
+
 ### Notice（通知）
 
 Notice 是 View 层组件及 Service 实例产生的定向事件，可以理解为对用户操作行为或定时任务等后台行为的抽象。Notice 统一由 Service 及其子类实例进行处理，且同一类型 Notice 只能被一个 Service 实例监听并处理，以此保证 Service 功能的唯一性和功能内聚性
@@ -38,8 +44,10 @@ App 在将 Notice 传递给 Service 之前会先传递给中间件，并在获�
 
 中间件可选择性地切入 Notice 处理前后的两个阶段，但无法 Notice 本身或回调结果做出修改
 
-### 示例图
-![处理](./doc/uml/Notice_Timeline.png)
+--
+
+# 业务流说明
+![](./doc/uml/Notice_Timeline.png)
 
 --
 
@@ -49,8 +57,3 @@ App 在将 Notice 传递给 Service 之前会先传递给中间件，并在获�
 
 视图层根据自身所用的框架，选择不同的Plugin进行集成
 
---
-
-# 类图示例
-
-![](./doc/uml/ClassDefination.png)
