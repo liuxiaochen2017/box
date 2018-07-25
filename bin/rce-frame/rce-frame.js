@@ -619,7 +619,7 @@ var rce;
      * 获取 rce 框架版本
      */
     function version() {
-        return "rce_frame_v_" + version;
+        return "rce_frame_v_" + _version;
     }
     rce.version = version;
 })(rce || (rce = {}));
