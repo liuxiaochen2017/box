@@ -6,7 +6,7 @@ module rce {
      * @param listener 
      * @param thisObject 
      */
-    export function addAction(type: string, listener: Handler, thisObject: any): void {
+    export function addAction(type: string, listener: EventHandler, thisObject: any): void {
         emittor.addEventListener(type, listener, thisObject);
     }
     /**
@@ -15,7 +15,7 @@ module rce {
      * @param listener 
      * @param thisObject 
      */
-    export function removeAction(type: string, listener: Handler, thisObject: any): void {
+    export function removeAction(type: string, listener: EventHandler, thisObject: any): void {
         emittor.removeEventListener(type, listener, thisObject);
     }
     /**

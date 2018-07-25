@@ -21,21 +21,43 @@ declare module rce {
      */
     class Event extends HashObject {
         /**
-         * 类型
+         * 事件类型
          */
-        readonly type: string;
+        readonly eventType: string;
         /**
-         * 携带的数据
+         * 传递的数据
          */
         readonly data: any;
-        constructor(type: string, data?: any);
+        /**
+         * 构建一个事件对象
+         * @param eventType 事件类型
+         * @param data 事件传递的数据
+         */
+        constructor(eventType: string, data?: any);
     }
+    /**
+     * 事件处理器函数，接收一个Event实例对象做为参数
+     */
+    type EventHandler = (event?: Event) => void;
+    /**
+     * 事件监听器
+     */
+    type EventListener = {
+        /**
+         * 处理器
+         */
+        readonly handle: EventHandler;
+        /**
+         * 处理器函数的 this 作用域指向
+         */
+        readonly context: any;
+        /**
+         * 优先级
+         */
+        readonly priority: number;
+    };
 }
 declare module rce {
-    /**
-     * 监听器方法，接收一个Event实例对象做为参数
-     */
-    type Handler = (event?: Event) => void;
     /**
      * 事件派发与接收器
      */
@@ -48,14 +70,14 @@ declare module rce {
          * @param thisObject
          * @param priority 优先级
          */
-        addEventListener(eventType: string, handle: Handler, thisObject?: any, priority?: number): void;
+        addEventListener(eventType: string, handle: EventHandler, thisObject?: any, priority?: number): void;
         /**
          * 移除事件监听器
          * @param eventType
          * @param handle
          * @param thisObject
          */
-        removeEventListener(eventType: string, handle: Handler, thisObject?: any): void;
+        removeEventListener(eventType: string, handle: EventHandler, thisObject?: any): void;
         /**
          * 移除所有相关事件类型的监听器
          * @param eventType
@@ -79,19 +101,138 @@ declare module rce {
          * @param handle 事件监听函数
          * @param thisObject
          */
-        hasEventListener(eventType: string, handle: Handler, thisObject?: any): boolean;
+        hasEventListener(eventType: string, handle: EventHandler, thisObject?: any): boolean;
     }
 }
 declare module rce {
+    abstract class Plugin extends EventDispatcher {
+        /**
+         * 发送通知
+         */
+        readonly sendNotice: (noticeType: string, data?: any, whileDone?: Function, context?: any) => void;
+        /**
+         * 注册广播监听器
+         */
+        readonly registerBroadcastListener: (broadcastType: string, listener: BroadcastHandle, thisObject?: any) => void;
+    }
+    class PluginEvent extends Event {
+        /**
+         * 添加广播监听器
+         */
+        static LISTEN_BROADCAST: string;
+        constructor(broadListener: BroadcastListener);
+    }
     /**
-     * vue 插件，给每个组件实例增加发送通知的接口及接收广播的入口
-     * @example
-     * Vue.use(rce.VuePlugin(app))
+     * 支持的插件类型
      */
-    function VuePlugin(app: App): {
-        install(Vue: any): void;
+    type PluginType = 'Vue';
+    /**
+     * 根据框架类型获取视图层拓展插件
+     * @param type
+     */
+    function getPlugin(type: PluginType): Plugin;
+}
+declare module rce {
+    /**
+     * 通知事件：用于view层与service及service之间的消息传递。
+     */
+    class Notice extends Event {
+        /**
+         * 通知事件类型常量
+         */
+        static readonly EVENT: string;
+        /**
+         * 通知处理完成时的回调，由处理该通知的 Service 决定调用时机
+         */
+        readonly whileDone: Function;
+        /**
+         * 回调函数的 this 指向
+         */
+        readonly context: any;
+        /**
+         * 通知类型
+         */
+        readonly noticeType: string;
+        /**
+         * 构建一条通知
+         * @param noticeType 通知类型
+         * @param data 通知数据
+         * @param whileDone 通知处理完成时的回调函数，可用于接收结果
+         * @param context 回调函数的 this 指向
+         */
+        constructor(noticeType: string, data?: any, whileDone?: Function, context?: any);
+    }
+    /**
+     * 通知处理函数
+     */
+    type NoticeHandle = (notice: Notice) => void;
+    /**
+     * 通知监听器
+     */
+    type NoticeListener = {
+        /**
+         * 监听的通知类型
+         */
+        noticeType: string;
+        /**
+         * 处理器
+         */
+        handle: NoticeHandle;
+        /**
+         * 处理器 this 作用域指向
+         */
+        context: any;
     };
-    function ReactPlugin(app: App): void;
+}
+declare module rce {
+    /**
+     * 广播事件
+     */
+    class Broadcast extends Event {
+        /**
+         * 广播事件类型常量
+         */
+        static readonly EVENT: string;
+        /**
+         * 广播类型
+         */
+        readonly broadcastType: string;
+        /**
+         * 构建一条广播
+         * @param broadcastType 广播类型
+         * @param data 广播数据
+         */
+        constructor(broadcastType: string, data?: any);
+    }
+    /**
+     * 广播事件处理器
+     */
+    type BroadcastHandle = (broadcast: Broadcast) => void;
+    /**
+     * 广播事件监听器
+     */
+    type BroadcastListener = {
+        /**
+         * 监听的广播类型
+         */
+        broadcastType: string;
+        /**
+         * 广播处理器
+         */
+        handle: BroadcastHandle;
+        /**
+         * 处理器函数的 this 作用域指向
+         */
+        context: any;
+    };
+}
+declare module rce {
+    /**
+     * Vue 框架插件
+     */
+    class VuePlugin extends Plugin {
+        install(Vue: any): void;
+    }
 }
 declare module rce {
     /**
@@ -101,121 +242,97 @@ declare module rce {
      */
     class App {
         private _serviceArr;
-        private _mapNoticeHandle;
         /**
          * 注册服务
          * @param services
          */
-        registerService(...services: Service[]): void;
+        useService(...services: Service[]): void;
         /**
          * TODO
          * 注册消息中间件，可以用来跟踪消息日志、拦截消息处理、验证处理结果等
          * @param middlewares
          */
-        registerMiddleware(...middlewares: any[]): void;
         /**
          * 启动app
          */
         start(): Promise<void>;
+        __addNoticeListener(...arrNoticeListener: NoticeListener[]): void;
+        __addBroadcastListener(...arrBroadcastListener: BroadcastListener[]): void;
+        private receiveNotice(notice);
+        private receiveBroadcast(broadcast);
+        private _viewPlugin;
         /**
-         * 广播通知
-         * @param notice
+         * 获取视图组件插件
+         * @param type
+         * @example
+         * Vue框架使用方法
+         * `Vue.use(app.viewPlugin('Vue'))`
+         * 给组件增加发送通知及接收广播的能力
+         * `this.$sendNotice('') // 发送通知`
+         * `this.$listenBroadcast('') // 监听广播`
          */
-        sendNotice(notice: Notice): void;
-        private noticeHandle(type, data?, callback?, thisObject?);
-        private registerNoticeListener;
-        private beforeStart(_serviceArr);
-        private afterStart();
+        viewPlugin(type: PluginType): Plugin;
     }
 }
 declare module rce {
     /**
-     * 通知监听器
+     * service 基类，封装非UI层业务逻辑，所有的service需继承此基类！
+     * 通过`this.registerNoticeListener()`注册要处理的`Notice`类型及相应处理方法！
+     * @example this.registerNoticeListener('')
+     * 通过`this.listenBroadcast()`监听相应的`Broadcast`类型
+     *
      */
-    interface INoticeListener {
+    abstract class Service extends EventDispatcher {
+        private __noticeListeneres;
         /**
-         * 监听的通知类型
+         * 注册通知处理函数，用来处理 Notice 实例
          */
-        type: string;
+        protected readonly registerNoticeListener: (noticeType: string, handle: NoticeHandle, thisObject?: any) => void;
+        private __broadcastListeneres;
         /**
-         * 处理器函数
+         * 注册广播处理函数，用于接收广播数据
          */
-        handle: (data: any, done: Function, thisObject?: any) => void;
+        protected readonly listenBroadcast: (broadcastType: string, handle: BroadcastHandle, thisObject?: any) => void;
         /**
-         * 处理器this指向
+         * 发送通知
+         * @param noticeType 通知类型
+         * @param data 通知数据
+         * @param whileDone 通知处理完成时的回调函数，可用于接收结果
+         * @param context 回调函数的 this 指向
          */
-        thisObject?: any;
+        protected readonly sendNotice: (noticeType: string, data?: any, whileDone?: Function, context?: any) => void;
         /**
-         * 是否在处理一次后移除
+         * 发送广播
+         * @param broadcastType 广播类型
+         * @param data 携带的数据
          */
-        once?: boolean;
+        protected readonly sendBroadcast: (broadcastType: string, data?: any) => void;
+        readonly __install: (app: App) => void;
+        /**
+         * sendNotice 的别名方法
+         */
+        protected readonly __s: (noticeType: string, data?: any, whileDone?: Function, context?: any) => void;
+        /**
+         * listenBroadcast 的别名方法
+         */
+        protected readonly __l: (broadcastType: string, handle: BroadcastHandle, thisObject?: any) => void;
     }
 }
 declare module rce {
     /**
-     * 环境常量
-     */
-    enum ENV {
-        /**
-         * 开发环境
-         */
-        DEVELOPMENT = 0,
-        /**
-         * 生产环境
-         */
-        PRODUCTION = 1,
-    }
-}
-declare module rce {
-    /**
-     * 系统通知，用于view层与service及service之间的消息传递
-     */
-    class Notice extends Event {
-        /**
-         * 通知处理完成时的回调，由处理该通知的 service 决定调用时机
-         */
-        readonly callback: Function;
-        /**
-         * 回调函数的 this 指向
-         */
-        readonly context: any;
-        constructor(type: string, data?: any, callback?: Function, context?: any);
-    }
-}
-declare module rce {
-    /**
-     * service 基类，封装非UI层业务逻辑，所有的service需继承此基类
-     */
-    abstract class Service {
-        /**
-         * app 启动之前调用的钩子函数
-         * 在此钩子被调用时，所有的service已挂载完毕，service实例可以在此注册要监听的事件通知类型
-         * 所有的通知由根节点 app 实例派发
-         * @param register (listener: INoticeListener) => void
-         */
-        abstract beforeAppStart(register: (listener: INoticeListener) => void): Promise<void>;
-        /**
-         * app 启动完成后调用的钩子函数
-         * service实例可以在这此阶段完成一些状态初始化
-         */
-        afterAppStart(): void;
-    }
-}
-declare module rce {
-    /**
-     * 添加全局监听
+     * 添加全局监听，由于是直接挂载的顶级对象rce上，故通过该方法可进行跨 App 之间的通信
      * @param type
      * @param listener
      * @param thisObject
      */
-    function addAction(type: string, listener: Handler, thisObject: any): void;
+    function addAction(type: string, listener: EventHandler, thisObject: any): void;
     /**
      * 移除全局监听
      * @param type
      * @param listener
      * @param thisObject
      */
-    function removeAction(type: string, listener: Handler, thisObject: any): void;
+    function removeAction(type: string, listener: EventHandler, thisObject: any): void;
     /**
      * 全局动作派发
      * @param type
@@ -247,6 +364,8 @@ declare module rce {
      * console.log(sub.getParam()); // 打印自身定义的实例方法
      */
     function extend(definition: any, basicClass: any, TAG: any, editProto: any): () => any;
+}
+declare module rce {
 }
 declare module rce {
     /**

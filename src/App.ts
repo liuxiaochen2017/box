@@ -7,13 +7,12 @@ module rce {
     export class App {
 
         private _serviceArr: Service[] = [];
-        private _mapNoticeHandle = {};
 
         /**
          * 注册服务
          * @param services 
          */
-        registerService(...services: Service[]) {
+        useService(...services: Service[]) {
             this._serviceArr.push(...services);
         }
 
@@ -22,65 +21,74 @@ module rce {
          * 注册消息中间件，可以用来跟踪消息日志、拦截消息处理、验证处理结果等
          * @param middlewares 
          */
-        registerMiddleware(...middlewares: any[]) {
-        }
+        // useMiddleware(...middlewares: any[]) {
+        // }
 
         /**
          * 启动app
          */
         start(): Promise<void> {
-            return this.beforeStart(this._serviceArr.concat())
-                .then(this.afterStart)
-                .catch(Promise.reject)
+            for (let i = 0, len = this._serviceArr.length; i < len; i += 1) {
+                this._serviceArr.forEach(service => {
+                    // 挂载 Notice 与 Broadcast 监听器
+                    service.__beforeAppStart(this)
+                    // 监听 service 派发的 Notice 
+                    service.addEventListener(Notice.EVENT, this.receiveNotice, this);
+                    // 监听 service 派发的 Broadcast
+                    service.addEventListener(Broadcast.EVENT, this.receiveBroadcast, this);
+                })
+            }
+            // 暂时定义未异步函数，以方便后续可能的拓展
+            return Promise.resolve();
         }
+
+        // 添加通知监听器，同一类型通知只能存在一个监听器，不可重复，以此保证功能的唯一性
+        __addNoticeListener(...arrNoticeListener: NoticeListener[]) {
+            
+        }
+
+        // 添加广播监听器
+        __addBroadcastListener(...arrBroadcastListener: BroadcastListener[]) {
+
+        }
+
+        // 接收通知事件
+        private receiveNotice(notice: Notice) {
+            // TODO 接收到 通知，发送给相应的 通知监听器
+        }
+
+        // 接收广播事件
+        private receiveBroadcast(broadcast: Broadcast) {
+            // TODO 接收到 广播，分发给所有的 广播接收器
+        }
+
+        private _viewPlugin: Plugin;
 
         /**
-         * 广播通知
-         * @param notice
+         * 获取视图组件插件
+         * @param type 
+         * @example 
+         * Vue框架使用方法
+         * `Vue.use(app.viewPlugin('Vue'))`
+         * 给组件增加发送通知及接收广播的能力
+         * * 发送通知
+         * `this.$sendNotice('')`
+         * 别名方法 `this.__s('')`
+         * * 监听广播
+         * `this.$listenBroadcast('')`
+         * 别名方法：`this.__l`
          */
-        sendNotice(notice: Notice) {
-            this.noticeHandle(notice.type, notice.data, notice.callback, notice.context);
-        }
-
-        // 处理通知
-        private noticeHandle(type: string, data?: any, callback?: Function, thisObject?: any) {
-            // 查找处理函数
-            const listener: INoticeListener = this._mapNoticeHandle[type];
-            if (!listener) {
-                console.warn(`未监听的通知类型：${type}`);
-                return;
+        public viewPlugin(type: PluginType): Plugin {
+            if (!this._viewPlugin) {
+                this._viewPlugin = getPlugin(type);
+                // 监听从视图层派发的 Notice 数据
+                this._viewPlugin.addEventListener(Notice.EVENT, this.receiveNotice, this);
+                // 监听视图组件注册 Broadcast 监听器
+                this._viewPlugin.addEventListener(PluginEvent.LISTEN_BROADCAST, (event: PluginEvent) => {
+                    this.__addBroadcastListener(event.data);
+                });
             }
-            const { handle, once } = listener;
-            handle.call(listener.thisObject, data, callback || noop, thisObject);
-            once && delete this._mapNoticeHandle[type];
-        }
-
-        // 注册通知观察者
-        private registerNoticeListener = (...listeneres: INoticeListener[]) => {
-            for (let i = listeneres.length - 1; i >= 0; i -= 1) {
-                const listener = listeneres[i];
-                const { type } = listener;
-                if (this._mapNoticeHandle.hasOwnProperty(type)) {
-                    throw new Error(`noticeType: '${type}' 注册重复！`);
-                }
-                this._mapNoticeHandle[type] = listener
-            }
-        }
-
-        private beforeStart(_serviceArr: Service[]) {
-            console.log('------ beforeStart ------')
-            if (_serviceArr.length) {
-                const service = _serviceArr.shift();
-                return service.beforeAppStart(this.registerNoticeListener)
-                    .then(() => this.beforeStart(_serviceArr))
-                    .catch(Promise.reject);
-            } else {
-                return Promise.resolve();
-            }
-        }
-
-        private afterStart() {
-            console.log('------ afterStart ------')
+            return this._viewPlugin;
         }
     }
 }

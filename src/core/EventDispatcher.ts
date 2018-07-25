@@ -1,21 +1,4 @@
 module rce {
-    class Listener {
-        readonly handle: Handler;
-        readonly context: any;
-        readonly priority: number;
-        constructor(handle: Handler, context: any, priority: number) {
-            this.handle = handle;
-            this.context = context;
-            this.priority = priority;
-        }
-    }
-
-    /**
-     * 监听器方法，接收一个Event实例对象做为参数
-     */
-    export type Handler = (event?: Event) => void;
-
-
     /**
      * 事件派发与接收器
      */
@@ -30,29 +13,29 @@ module rce {
          * @param thisObject 
          * @param priority 优先级
          */
-        addEventListener(eventType: string, handle: Handler, thisObject: any = null, priority: number = 0) {
-            const arrListener: Listener[] = this.mapListeners[eventType];
+        addEventListener(eventType: string, handle: EventHandler, thisObject: any = null, priority: number = 0) {
+
+            const arrListener: EventListener[] = this.mapListeners[eventType];
             if (!arrListener) {
-                this.mapListeners[eventType] = [
-                    new Listener(handle, thisObject, priority)
-                ];
-            } else {
-                // 重复注册检查
-                const repeat = arrListener.some(temp =>
-                    temp.handle === handle && temp.context === thisObject);
-                if (!repeat) {
-                    const listener = new Listener(handle, thisObject, priority);
-                    // 按优先级插入
-                    for (let i = arrListener.length - 1; i >= 0; i -= 1) {
-                        const temp = arrListener[i];
-                        if (temp.priority >= listener.priority) {
-                            arrListener.splice(i, 0, listener);
-                            return;
-                        }
-                    }
-                    arrListener.unshift(listener);
+                this.mapListeners[eventType] = [{handle, context: thisObject, priority}];
+                return;
+            }
+            // 重复注册检查
+            const repeat = arrListener.some(temp =>
+                temp.handle === handle && temp.context === thisObject);
+            if (repeat) {
+                return;
+            }
+            const listener: EventListener = { handle, context: thisObject, priority };
+            // 按优先级插入
+            for (let i = arrListener.length - 1; i >= 0; i -= 1) {
+                const temp = arrListener[i];
+                if (temp.priority >= listener.priority) {
+                    arrListener.splice(i, 0, listener);
+                    return;
                 }
             }
+            arrListener.unshift(listener);
         }
         /**
          * 移除事件监听器
@@ -60,8 +43,8 @@ module rce {
          * @param handle 
          * @param thisObject 
          */
-        removeEventListener(eventType: string, handle: Handler, thisObject?: any) {
-            const arrListener: Listener[] = this.mapListeners[eventType];
+        removeEventListener(eventType: string, handle: EventHandler, thisObject?: any) {
+            const arrListener: EventListener[] = this.mapListeners[eventType];
             if (!arrListener) {
                 return;
             }
@@ -81,9 +64,7 @@ module rce {
          * @param eventType 
          */
         removeAllListener(eventType: string) {
-            if (this.mapListeners.hasOwnProperty(eventType)) {
-                delete this.mapListeners[eventType];
-            }
+            this.mapListeners.hasOwnProperty(eventType) && delete this.mapListeners[eventType];
         }
         /**
          * 派发事件
@@ -99,7 +80,7 @@ module rce {
          * @param data 
          */
         dispatchEvent(event: Event) {
-            const arrListener: Listener[] = this.mapListeners[event.type];
+            const arrListener: EventListener[] = this.mapListeners[event.eventType];
             if (arrListener) {
                 arrListener.forEach(listener => listener.handle.call(listener.context, event))
             }
@@ -110,8 +91,8 @@ module rce {
          * @param handle 事件监听函数
          * @param thisObject 
          */
-        hasEventListener(eventType: string, handle: Handler, thisObject?: any): boolean {
-            const arrListener: Listener[] = this.mapListeners[eventType];
+        hasEventListener(eventType: string, handle: EventHandler, thisObject?: any): boolean {
+            const arrListener: EventListener[] = this.mapListeners[eventType];
             return arrListener && arrListener.some(temp =>
                 temp.handle === handle && temp.context === thisObject)
         }
