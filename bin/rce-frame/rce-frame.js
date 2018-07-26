@@ -169,6 +169,9 @@ var rce;
 })(rce || (rce = {}));
 var rce;
 (function (rce) {
+    /**
+     * 视图插件基类
+     */
     var Plugin = (function (_super) {
         __extends(Plugin, _super);
         function Plugin() {
@@ -182,7 +185,7 @@ var rce;
             /**
              * 注册广播监听器
              */
-            _this.registerBroadcastListener = function (broadcastType, listener, thisObject) {
+            _this.listenBroadcast = function (broadcastType, listener, thisObject) {
                 _this.dispatchEvent(new PluginEvent({
                     broadcastType: broadcastType,
                     handle: listener,
@@ -320,16 +323,14 @@ var rce;
          */
         App.prototype.start = function () {
             var _this = this;
-            for (var i = 0, len = this._serviceArr.length; i < len; i += 1) {
-                this._serviceArr.forEach(function (service) {
-                    // 挂载 Notice 与 Broadcast 监听器
-                    service.__beforeAppStart(_this);
-                    // 监听 service 派发的 Notice 
-                    service.addEventListener(rce.Notice.EVENT, _this.receiveNotice, _this);
-                    // 监听 service 派发的 Broadcast
-                    service.addEventListener(rce.Broadcast.EVENT, _this.receiveBroadcast, _this);
-                });
-            }
+            this._serviceArr.forEach(function (service) {
+                // 挂载 Notice 与 Broadcast 监听器
+                service.__beforeAppStart(_this);
+                // 监听 service 派发的 Notice 
+                service.addEventListener(rce.Notice.EVENT, _this.receiveNotice, _this);
+                // 监听 service 派发的 Broadcast
+                service.addEventListener(rce.Broadcast.EVENT, _this.receiveBroadcast, _this);
+            });
             // 暂时定义未异步函数，以方便后续可能的拓展
             return Promise.resolve();
         };
@@ -354,7 +355,7 @@ var rce;
             // 查找通知监听器
             var listener = this._mapNoticeListener[noticeType];
             if (!listener) {
-                console.warn("\u672A\u5904\u7406\u7684\u901A\u77E5\u4E8B\u4EF6: " + noticeType);
+                console.warn("\u672A\u5904\u7406\u7684\u901A\u77E5: " + noticeType + "\uFF01\u8BF7\u68C0\u67E5 Notice \u4E8B\u4EF6\u76D1\u542C\uFF0C\u5E76\u786E\u4FDD\u5DF2\u8C03\u7528 App \u5B9E\u4F8B\u7684 start() \u65B9\u6CD5");
                 return;
             }
             listener.handle.call(listener.context, notice);
@@ -384,7 +385,7 @@ var rce;
             // 按广播类型查找监听器
             var arrListener = this._mapBroadcastListener[type];
             if (!arrListener) {
-                console.warn("\u672A\u5904\u7406\u7684\u5E7F\u64AD\u4E8B\u4EF6: " + type);
+                console.warn("\u672A\u5904\u7406\u7684\u5E7F\u64AD: " + type + "\uFF01\u8BF7\u68C0\u67E5\u5E7F\u64AD\u76D1\u542C\uFF0C\u5E76\u786E\u4FDD\u5DF2\u8C03\u7528 App \u5B9E\u4F8B\u7684 start() \u65B9\u6CD5");
                 return;
             }
             // 逐一发送广播数据
@@ -433,14 +434,19 @@ var rce;
             return _super !== null && _super.apply(this, arguments) || this;
         }
         VuePlugin.prototype.install = function (Vue) {
-            var _this = this;
+            var sendNotice = this.sendNotice.bind(this);
+            var listenBroadcast = this.listenBroadcast.bind(this);
+            // 为组件赋能
             Vue.mixin({
                 beforeCreate: function () {
-                    // __s 与 __l 是别名，用来方便业务开发
-                    this.__s = this.$sendNotice = _this.sendNotice.bind(_this);
-                    this.__l = this.$listenBroadcast = _this.registerBroadcastListener.bind(_this);
+                    // __sn 与 __lb 是别名，用来方便业务开发
+                    this.__sn = this.$sendNotice = sendNotice;
+                    this.__lb = this.$listenBroadcast = listenBroadcast;
                 }
             });
+            // 为 Vue 实例赋能
+            Vue.prototype.__sn = Vue.prototype.$sendNotice = sendNotice;
+            Vue.prototype.__lb = Vue.prototype.$listenBroadcast = listenBroadcast;
         };
         return VuePlugin;
     }(rce.Plugin));

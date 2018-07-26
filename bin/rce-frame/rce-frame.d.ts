@@ -105,6 +105,9 @@ declare module rce {
     }
 }
 declare module rce {
+    /**
+     * 视图插件基类
+     */
     abstract class Plugin extends EventDispatcher {
         /**
          * 发送通知
@@ -113,7 +116,7 @@ declare module rce {
         /**
          * 注册广播监听器
          */
-        readonly registerBroadcastListener: (broadcastType: string, listener: BroadcastHandle, thisObject?: any) => void;
+        readonly listenBroadcast: (broadcastType: string, listener: BroadcastHandle, thisObject?: any) => void;
     }
     class PluginEvent extends Event {
         /**

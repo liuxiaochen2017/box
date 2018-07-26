@@ -4,14 +4,19 @@ module rce {
      */
     export class VuePlugin extends Plugin {
         install(Vue) {
-            const _this = this;
+            const sendNotice = this.sendNotice.bind(this)
+            const listenBroadcast = this.listenBroadcast.bind(this);
+            // 为组件赋能
             Vue.mixin({
                 beforeCreate() {
-                    // __s 与 __l 是别名，用来方便业务开发
-                    this.__s = this.$sendNotice = _this.sendNotice.bind(_this)
-                    this.__l = this.$listenBroadcast = _this.registerBroadcastListener.bind(_this);
+                    // __sn 与 __lb 是别名，用来方便业务开发
+                    this.__sn = this.$sendNotice = sendNotice;
+                    this.__lb = this.$listenBroadcast = listenBroadcast;
                 }
-            })
+            });
+            // 为 Vue 实例赋能
+            Vue.prototype.__sn = Vue.prototype.$sendNotice = sendNotice;
+            Vue.prototype.__lb = Vue.prototype.$listenBroadcast = listenBroadcast;
         }
     }
 }

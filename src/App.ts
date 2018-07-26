@@ -29,16 +29,14 @@ module rce {
          * 启动app
          */
         start(): Promise<void> {
-            for (let i = 0, len = this._serviceArr.length; i < len; i += 1) {
-                this._serviceArr.forEach(service => {
-                    // 挂载 Notice 与 Broadcast 监听器
-                    service.__beforeAppStart(this)
-                    // 监听 service 派发的 Notice 
-                    service.addEventListener(Notice.EVENT, this.receiveNotice, this);
-                    // 监听 service 派发的 Broadcast
-                    service.addEventListener(Broadcast.EVENT, this.receiveBroadcast, this);
-                })
-            }
+            this._serviceArr.forEach(service => {
+                // 挂载 Notice 与 Broadcast 监听器
+                service.__beforeAppStart(this)
+                // 监听 service 派发的 Notice 
+                service.addEventListener(Notice.EVENT, this.receiveNotice, this);
+                // 监听 service 派发的 Broadcast
+                service.addEventListener(Broadcast.EVENT, this.receiveBroadcast, this);
+            })
             // 暂时定义未异步函数，以方便后续可能的拓展
             return Promise.resolve();
         }
@@ -63,7 +61,7 @@ module rce {
             // 查找通知监听器
             const listener: NoticeListener = this._mapNoticeListener[noticeType];
             if (!listener) {
-                console.warn(`未处理的通知事件: ${noticeType}`);
+                console.warn(`未处理的通知: ${noticeType}！请检查 Notice 事件监听，并确保已调用 App 实例的 start() 方法`);
                 return;
             }
             listener.handle.call(listener.context, notice);
@@ -92,7 +90,7 @@ module rce {
             // 按广播类型查找监听器
             const arrListener: BroadcastListener[] = this._mapBroadcastListener[type]
             if (!arrListener) {
-                console.warn(`未处理的广播事件: ${type}`);
+                console.warn(`未处理的广播: ${type}！请检查广播监听，并确保已调用 App 实例的 start() 方法`);
                 return;
             }
             // 逐一发送广播数据

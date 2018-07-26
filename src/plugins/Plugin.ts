@@ -1,5 +1,7 @@
 module rce {
-    
+    /**
+     * 视图插件基类
+     */
     export abstract class Plugin extends EventDispatcher {
         /**
          * 发送通知
@@ -10,7 +12,7 @@ module rce {
         /**
          * 注册广播监听器
          */
-        readonly registerBroadcastListener = (broadcastType: string, listener: BroadcastHandle, thisObject?: any) => {
+        readonly listenBroadcast = (broadcastType: string, listener: BroadcastHandle, thisObject?: any) => {
             this.dispatchEvent(new PluginEvent({
                 broadcastType,
                 handle: listener,
