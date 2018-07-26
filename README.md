@@ -1,8 +1,12 @@
-# WEB前端框架设计
+# WEB前端开发框架
 
 --
 
 ![](./doc/uml/ClassDefination.png)
+
+--
+
+[使用示例](./test/index.js)
 
 --
 
