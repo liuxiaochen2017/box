@@ -17,13 +17,16 @@ module rce {
             this._serviceArr.push(...services);
         }
 
+        private _arrMiddleware: Middleware[] = []
+
         /**
          * TODO
          * 注册消息中间件，可以用来跟踪消息日志、拦截消息处理、验证处理结果等
          * @param middlewares 
          */
-        // useMiddleware(...middlewares: any[]) {
-        // }
+        useMiddleware(...middlewares: Middleware[]) {
+            this._arrMiddleware.push(...middlewares);
+        }
 
         /**
          * 启动app
@@ -57,14 +60,41 @@ module rce {
 
         // 接收通知事件
         private receiveNotice(notice: Notice) {
-            const noticeType = notice.noticeType;
-            // 查找通知监听器
+            const { noticeType } = notice;
+            // 查找 Notice 监听器
             const listener: NoticeListener = this._mapNoticeListener[noticeType];
             if (!listener) {
                 console.warn(`未处理的通知: ${noticeType}！请检查 Notice 事件监听，并确保已调用 App 实例的 start() 方法`);
                 return;
             }
-            listener.handle.call(listener.context, notice);
+            this.noticeAssemblyLine(notice, listener);
+        }
+
+        private async noticeAssemblyLine(notice: Notice, listener: NoticeListener) {
+            // 中间件的回调队列
+            const arrCallback = [];
+            const next = callback => callback && arrCallback.push(callback)
+
+            // 执行中间件函数
+            for (let i = 0, len = this._arrMiddleware.length; i < len; i += 1) {
+                // 中止 Notice 的传递
+                const discontinue = this._arrMiddleware[i](notice, next);
+                if (discontinue) {
+                    return;
+                }
+            }
+            let tempErr = null, result = null;
+            try {
+                result = await listener.handle.call(listener.context, notice);
+            } catch (err) {
+                tempErr = err;
+            }
+            // 执行中间件回调
+            while (arrCallback.length) {
+                arrCallback.pop()(tempErr, result)
+            }
+            // 结果回调给 Notice 发起者
+            notice.whileDone && notice.whileDone.call(notice.context, tempErr, result)
         }
 
         private _mapBroadcastListener = {};

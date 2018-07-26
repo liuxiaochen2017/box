@@ -8,6 +8,17 @@ const Service = rce.extend(function (_super) {
         console.log('---- service send broadcast ----')
         this.__sb('to_component', `I caught an notice data: ${notice.data}`)
     })
+    this.__ln('async_notice', (notice) => {
+        return new Promise(resolve => {
+            setTimeout(() => {
+                resolve(3000)
+            }, 3000);
+        })
+    })
+    // 监听 Broadcast
+    this.__lb('some_broadcast', (broadcast) => {
+        console.log(broadcast);
+    })
 }, rce.Service, 'Service')
 
 // 创建app
@@ -15,6 +26,18 @@ const app = new rce.App();
 
 // 挂载 service 实例
 app.useService(new Service());
+
+// 使用内置中间件，rce.middleware中内置了一些中间件
+app.useMiddleware(rce.middleware.Log)
+
+// 自定义中间件，拦截to_service通知
+function mid(notice, next) {
+    if (notice.noticeType === 'to_service') {
+        return true;
+    }
+    next()
+}
+app.useMiddleware(mid);
 
 // 使用 Vue 插件为 Vue 实例及其组件赋能
 Vue.use(app.viewPlugin('Vue'))
@@ -57,5 +80,8 @@ app.start().then(() => {
     })
     console.log('---- vm send notice ----');
     // Vue 实例发送 Notice
-    vm.__sn('to_service', 'I am vm');
+    vm.__sn('async_notice', 'I am vm', (err, data) => {
+        console.log('---- vm notice done ----')
+        console.log(err, data)
+    });
 })

@@ -231,6 +231,26 @@ declare module rce {
 }
 declare module rce {
     /**
+     * 中间件函数
+     * @param notice 通知事件实例
+     * @param next
+     * @returns 是否截断调用，若值为true，则后续中间件将不执行
+     */
+    type Middleware = (notice: Notice, next: Function) => boolean | void;
+    /**
+     * 内置中间件
+     */
+    module middleware {
+        /**
+         * 处理时长统计
+         * @param notice
+         * @param next
+         */
+        function Log(notice: Notice, next: any): void;
+    }
+}
+declare module rce {
+    /**
      * App 实例是整个前端业务的逻辑根节点。
      * view 层及 service 通过 App 实例发送通知来进行业务操作；
      * 通知分发由 App 实例对象内部完成，通知的处理由所注册的 service 实例完成；
@@ -242,11 +262,13 @@ declare module rce {
          * @param services
          */
         useService(...services: Service[]): void;
+        private _arrMiddleware;
         /**
          * TODO
          * 注册消息中间件，可以用来跟踪消息日志、拦截消息处理、验证处理结果等
          * @param middlewares
          */
+        useMiddleware(...middlewares: Middleware[]): void;
         /**
          * 启动app
          */
@@ -254,6 +276,7 @@ declare module rce {
         private _mapNoticeListener;
         __addNoticeListener(...arrNoticeListener: NoticeListener[]): void;
         private receiveNotice(notice);
+        private noticeAssemblyLine(notice, listener);
         private _mapBroadcastListener;
         __addBroadcastListener(...arrBroadcastListener: BroadcastListener[]): void;
         private receiveBroadcast(broadcast);
